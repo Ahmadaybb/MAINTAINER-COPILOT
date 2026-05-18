@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
@@ -40,7 +40,23 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Derived from `.specify/memory/constitution.md` v1.0.0:
+
+- **Layering (I)**: No router imports SQLAlchemy/Redis or makes external calls; no repository
+  raises HTTP errors or invalidates cache; domain (Pydantic) models are distinct from ORM models.
+- **Secrets & Fail-Closed Boot (II)**: All secrets resolve from Vault at startup; `.env` holds
+  only the Vault root token and ports; boot refuses on Vault-unreachable, missing weights,
+  SHA-256 mismatch, or any zero/unset eval threshold.
+- **Redaction (III)**: Every log line, trace span, and memory write passes the `app/infra/`
+  redaction layer before leaving the service boundary.
+- **Evidence-Based (IV)**: Quality-affecting decisions cite a golden-set number; thresholds in
+  `eval_thresholds.yaml`; CI blocks regression; `eval_report.json` written, stored in MinIO,
+  diffed vs. last green build.
+- **Defensible Code (V)**: Every exception maps to a domain exception; no stack traces to users;
+  uncaught exceptions logged with trace ID + request ID; chatbot tool failures recovered (no
+  500); prompts version-controlled under `prompts/`.
+
+Any violation MUST be recorded in Complexity Tracking with explicit justification.
 
 ## Project Structure
 
@@ -48,12 +64,12 @@
 
 ```text
 specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── plan.md              # This file (/speckit-plan command output)
+├── research.md          # Phase 0 output (/speckit-plan command)
+├── data-model.md        # Phase 1 output (/speckit-plan command)
+├── quickstart.md        # Phase 1 output (/speckit-plan command)
+├── contracts/           # Phase 1 output (/speckit-plan command)
+└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
 ### Source Code (repository root)
