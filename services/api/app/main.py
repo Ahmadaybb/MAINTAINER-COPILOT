@@ -14,6 +14,7 @@ from app.api.admin_knowledge_source import router as admin_knowledge_source_rout
 from app.api.chat import router as chat_router
 from app.api.deps import RequestIdMiddleware
 from app.api.auth import router as auth_router
+from app.api.memory import router as memory_router
 from app.api.triage import router as triage_router
 from app.domain.errors import (
     BootValidationError,
@@ -108,6 +109,7 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     app.include_router(admin_invitations_router)
     app.include_router(admin_knowledge_source_router)
     app.include_router(chat_router)
+    app.include_router(memory_router)
     app.include_router(triage_router)
 
     @app.on_event("startup")

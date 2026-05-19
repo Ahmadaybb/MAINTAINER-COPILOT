@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -73,14 +74,46 @@ class LongTermMemoryRepository:
             select(LongTermMemory)
             .where(LongTermMemory.owner_id == owner_id)
             .where(LongTermMemory.deleted_at.is_(None))
+            .where(LongTermMemory.superseded_by.is_(None))
             .order_by(
                 LongTermMemory.embedding.cosine_distance(embedding),
-                LongTermMemory.superseded_by.is_not(None),
                 LongTermMemory.created_at.desc(),
             )
             .limit(limit)
         )
         return list(self.session.execute(statement).scalars())
+
+    def list_active(self, *, owner_id: UUID) -> list[LongTermMemory]:
+        statement = (
+            select(LongTermMemory)
+            .where(LongTermMemory.owner_id == owner_id)
+            .where(LongTermMemory.deleted_at.is_(None))
+            .where(LongTermMemory.superseded_by.is_(None))
+            .order_by(LongTermMemory.created_at.desc())
+        )
+        return list(self.session.execute(statement).scalars())
+
+    def get_owned_active(self, *, memory_id: UUID, owner_id: UUID) -> LongTermMemory | None:
+        statement = (
+            select(LongTermMemory)
+            .where(LongTermMemory.id == memory_id)
+            .where(LongTermMemory.owner_id == owner_id)
+            .where(LongTermMemory.deleted_at.is_(None))
+            .where(LongTermMemory.superseded_by.is_(None))
+        )
+        return self.session.execute(statement).scalar_one_or_none()
+
+    def mark_superseded(self, *, memory: LongTermMemory, superseded_by: UUID) -> LongTermMemory:
+        memory.superseded_by = superseded_by
+        self.session.add(memory)
+        self.session.flush()
+        return memory
+
+    def soft_delete(self, *, memory: LongTermMemory) -> LongTermMemory:
+        memory.deleted_at = datetime.now(UTC)
+        self.session.add(memory)
+        self.session.flush()
+        return memory
 
 
 def message_to_domain(message: Message) -> MessageRead:

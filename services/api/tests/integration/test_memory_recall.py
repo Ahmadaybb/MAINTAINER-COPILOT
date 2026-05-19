@@ -31,6 +31,10 @@ class FakeLongTermMemory:
         self.stored.append(content)
         return SimpleNamespace(content=content)
 
+    def write_memory_tool(self, *, owner_id, content: str, supersedes_id=None):
+        self.stored.append(content)
+        return SimpleNamespace(status="stored", clarifying_question=None)
+
     def recall(self, *, owner_id, query: str, limit: int = 5):
         memories = [SimpleNamespace(content=item, superseded_by=None) for item in self.stored]
         if self.conflict:

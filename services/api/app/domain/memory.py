@@ -53,6 +53,23 @@ class LongTermMemoryRead(BaseModel):
     deleted_at: datetime | None = None
 
 
+class ExplicitMemoryRequest(BaseModel):
+    content: str = Field(min_length=1)
+    supersedes_id: UUID | None = None
+
+
+class MemoryWriteResponse(BaseModel):
+    status: str
+    message: str
+    memory: LongTermMemoryRead | None = None
+    clarifying_question: str | None = None
+
+
+class MemoryDeleteResponse(BaseModel):
+    id: UUID
+    deleted: bool
+
+
 class ChatSessionResponse(BaseModel):
     session_id: UUID
 

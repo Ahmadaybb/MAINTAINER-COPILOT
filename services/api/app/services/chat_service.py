@@ -10,7 +10,6 @@ from app.domain.memory import (
     ChatMessageResponse,
     ChatSessionResponse,
     ChatToolCall,
-    MemorySource,
     MessageRole,
 )
 from app.domain.triage import TriageRequest
@@ -92,13 +91,12 @@ class ChatService:
         if _should_remember(redacted_content):
             try:
                 memory_text = _memory_content(redacted_content)
-                self.long_term_memory.write(
+                result = self.long_term_memory.write_memory_tool(
                     owner_id=user_id,
                     content=memory_text,
-                    source=MemorySource.EXPLICIT,
                 )
-                tool_calls.append(ChatToolCall(name="write_memory", ok=True))
-                notes.append("I will remember that.")
+                tool_calls.append(ChatToolCall(name="write_memory", ok=result.status == "stored"))
+                notes.append(result.clarifying_question or "I will remember that.")
             except ToolFailure as exc:
                 tool_calls.append(ChatToolCall(name="write_memory", ok=False, note=exc.message))
                 notes.append("I could not store that memory, but we can keep going.")
