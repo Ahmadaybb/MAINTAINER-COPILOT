@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.deps import RequestIdMiddleware
+from app.api.triage import router as triage_router
 from app.domain.errors import (
     BootValidationError,
     DomainError,
@@ -91,17 +92,21 @@ async def run_boot_checks(app: FastAPI) -> None:
     app.state.ready = True
 
 
-def create_app() -> FastAPI:
+def create_app(run_startup_checks: bool = True) -> FastAPI:
     configure_logging()
     configure_tracing()
 
     app = FastAPI(title="Maintainer's Copilot API")
     app.state.ready = False
     app.add_middleware(RequestIdMiddleware)
+    app.include_router(triage_router)
 
     @app.on_event("startup")
     async def _startup() -> None:
-        await run_boot_checks(app)
+        if run_startup_checks:
+            await run_boot_checks(app)
+        else:
+            app.state.ready = True
 
     @app.exception_handler(DomainError)
     async def _domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:

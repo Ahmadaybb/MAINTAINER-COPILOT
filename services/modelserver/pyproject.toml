@@ -8,6 +8,7 @@ dependencies = [
   "hvac",
   "transformers",
   "torch",
+  "safetensors",
   "scikit-learn",
   "spacy",
   "opentelemetry-sdk",

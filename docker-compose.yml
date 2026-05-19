@@ -38,8 +38,10 @@ services:
       VAULT_ADDR: http://vault:8200
       VAULT_ROOT_TOKEN: ${VAULT_ROOT_TOKEN}
       MINIO_ENDPOINT: http://minio:9000
+      MODEL_ARTIFACT_DIR: /models/distilbert_export
     volumes:
       - ./eval_thresholds.yaml:/eval_thresholds.yaml:ro
+      - ./models:/models:ro
     ports:
       - "${MODELSERVER_PORT}:8001"
 
