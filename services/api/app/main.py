@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.admin_invitations import router as admin_invitations_router
 from app.api.admin_knowledge_source import router as admin_knowledge_source_router
+from app.api.admin_widgets import router as admin_widgets_router
 from app.api.chat import router as chat_router
 from app.api.deps import RequestIdMiddleware
 from app.api.auth import router as auth_router
@@ -108,6 +109,7 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(admin_invitations_router)
     app.include_router(admin_knowledge_source_router)
+    app.include_router(admin_widgets_router)
     app.include_router(chat_router)
     app.include_router(memory_router)
     app.include_router(triage_router)
