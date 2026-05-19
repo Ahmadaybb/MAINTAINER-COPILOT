@@ -45,3 +45,8 @@ class WidgetConfigRead(WidgetConfigBase):
     embed_snippet: str
     warnings: list[str] = Field(default_factory=list)
 
+
+class PublicWidgetConfig(BaseModel):
+    theme: dict
+    greeting: str
+    enabled_tools: list[str]

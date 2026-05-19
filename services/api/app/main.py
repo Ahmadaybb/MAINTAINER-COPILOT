@@ -17,6 +17,7 @@ from app.api.deps import RequestIdMiddleware
 from app.api.auth import router as auth_router
 from app.api.memory import router as memory_router
 from app.api.triage import router as triage_router
+from app.api.widget_public import router as widget_public_router
 from app.domain.errors import (
     BootValidationError,
     DomainError,
@@ -113,6 +114,7 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     app.include_router(chat_router)
     app.include_router(memory_router)
     app.include_router(triage_router)
+    app.include_router(widget_public_router)
 
     @app.on_event("startup")
     async def _startup() -> None:

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from app.domain.errors import NotFoundError
-from app.domain.widget import WidgetConfigCreate, WidgetConfigRead, WidgetConfigUpdate
+from app.domain.widget import PublicWidgetConfig, WidgetConfigCreate, WidgetConfigRead, WidgetConfigUpdate
 
 if TYPE_CHECKING:
     from app.repositories.widgets import WidgetConfigRepository
@@ -97,3 +97,26 @@ class WidgetConfigService:
             embed_snippet=EMBED_SNIPPET_TEMPLATE.format(widget_id=config.id),
             warnings=[EMPTY_ORIGINS_WARNING] if not allowed_origins else [],
         )
+
+
+def public_widget_config(config: WidgetConfigRead) -> PublicWidgetConfig:
+    return PublicWidgetConfig(
+        theme=config.theme,
+        greeting=config.greeting,
+        enabled_tools=config.enabled_tools,
+    )
+
+
+def widget_origin_policy_headers(
+    *,
+    allowed_origins: list[str],
+    request_origin: str | None,
+) -> dict[str, str]:
+    frame_ancestors = " ".join(allowed_origins) if allowed_origins else "'none'"
+    headers = {
+        "Content-Security-Policy": f"frame-ancestors {frame_ancestors}",
+        "Vary": "Origin",
+    }
+    if request_origin and request_origin in allowed_origins:
+        headers["Access-Control-Allow-Origin"] = request_origin
+    return headers
