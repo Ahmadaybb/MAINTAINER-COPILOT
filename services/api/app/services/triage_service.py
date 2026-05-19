@@ -4,6 +4,7 @@ from app.domain.errors import ToolFailure, UpstreamUnavailable
 from app.domain.triage import Classification, Entity, TriageRequest, TriageResponse
 from app.infra.github_issue import GitHubIssueClient
 from app.infra.modelserver_client import ModelserverClient
+from app.infra.tracing import traced_call
 from app.services.summarize import Summarizer
 
 
@@ -30,19 +31,22 @@ class TriageService:
         summary: str | None = None
 
         try:
-            result = await self.modelserver.classify(issue_text, request_id=request_id)
+            with traced_call("tool", "classify_issue", {"issue_text": issue_text, "request_id": request_id}):
+                result = await self.modelserver.classify(issue_text, request_id=request_id)
             classification = Classification.model_validate(result.model_dump())
         except (ToolFailure, UpstreamUnavailable) as exc:
             notes.append(exc.message)
 
         try:
-            ner_result = await self.modelserver.ner(issue_text, request_id=request_id)
+            with traced_call("tool", "extract_entities", {"issue_text": issue_text, "request_id": request_id}):
+                ner_result = await self.modelserver.ner(issue_text, request_id=request_id)
             entities = [Entity.model_validate(entity.model_dump()) for entity in ner_result.entities]
         except (ToolFailure, UpstreamUnavailable) as exc:
             notes.append(exc.message)
 
         try:
-            summary = await self.summarizer.summarize(issue_text)
+            with traced_call("tool", "summarize_issue", {"issue_text": issue_text, "request_id": request_id}):
+                summary = await self.summarizer.summarize(issue_text)
         except ToolFailure as exc:
             notes.append(exc.message)
             summary = _fallback_summary(issue_text)

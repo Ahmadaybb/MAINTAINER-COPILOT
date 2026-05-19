@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.domain.errors import ToolFailure
+from app.infra.tracing import traced_call
 
 
 class AnthropicClient:
@@ -16,19 +17,20 @@ class AnthropicClient:
     async def summarize_issue(self, issue_text: str, prompt_path: Path) -> str:
         try:
             prompt = prompt_path.read_text(encoding="utf-8")
-            response = await self._client.messages.create(
-                model=self.model,
-                max_tokens=400,
-                temperature=0.0,
-                system=[
-                    {
-                        "type": "text",
-                        "text": prompt,
-                        "cache_control": {"type": "ephemeral"},
-                    }
-                ],
-                messages=[{"role": "user", "content": issue_text[:12000]}],
-            )
+            with traced_call("llm", "summarize_issue", {"prompt": prompt, "issue_text": issue_text}):
+                response = await self._client.messages.create(
+                    model=self.model,
+                    max_tokens=400,
+                    temperature=0.0,
+                    system=[
+                        {
+                            "type": "text",
+                            "text": prompt,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                    messages=[{"role": "user", "content": issue_text[:12000]}],
+                )
         except Exception as exc:  # noqa: BLE001 - external adapter maps provider failures.
             raise ToolFailure("The summarizer is temporarily unavailable.") from exc
 
@@ -40,19 +42,20 @@ class AnthropicClient:
 
     async def complete(self, *, system_prompt: str, user_prompt: str, max_tokens: int = 500) -> str:
         try:
-            response = await self._client.messages.create(
-                model=self.model,
-                max_tokens=max_tokens,
-                temperature=0.0,
-                system=[
-                    {
-                        "type": "text",
-                        "text": system_prompt,
-                        "cache_control": {"type": "ephemeral"},
-                    }
-                ],
-                messages=[{"role": "user", "content": user_prompt}],
-            )
+            with traced_call("llm", "complete", {"system_prompt": system_prompt, "user_prompt": user_prompt}):
+                response = await self._client.messages.create(
+                    model=self.model,
+                    max_tokens=max_tokens,
+                    temperature=0.0,
+                    system=[
+                        {
+                            "type": "text",
+                            "text": system_prompt,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                    messages=[{"role": "user", "content": user_prompt}],
+                )
         except Exception as exc:  # noqa: BLE001 - external adapter maps provider failures.
             raise ToolFailure("The language model is temporarily unavailable.") from exc
 

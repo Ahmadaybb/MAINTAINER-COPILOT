@@ -1,0 +1,25 @@
+{"id":"cls-001","text":"Crash on startup with TypeError in config parser","label":"bug","prediction":"bug","latency_ms":120,"cost_usd":0.0}
+{"id":"cls-002","text":"Add support for TOML config files","label":"feature","prediction":"feature","latency_ms":115,"cost_usd":0.0}
+{"id":"cls-003","text":"README install step references an old command","label":"docs","prediction":"docs","latency_ms":98,"cost_usd":0.0}
+{"id":"cls-004","text":"How do I rotate the API key for local dev?","label":"question","prediction":"question","latency_ms":101,"cost_usd":0.0}
+{"id":"cls-005","text":"Regression: CLI exits 1 when path contains spaces","label":"bug","prediction":"bug","latency_ms":118,"cost_usd":0.0}
+{"id":"cls-006","text":"Expose webhook retry settings in the admin page","label":"feature","prediction":"feature","latency_ms":132,"cost_usd":0.0}
+{"id":"cls-007","text":"Docs for Docker compose omit the migrate service","label":"docs","prediction":"docs","latency_ms":107,"cost_usd":0.0}
+{"id":"cls-008","text":"Can the widget be embedded in a private dashboard?","label":"question","prediction":"question","latency_ms":99,"cost_usd":0.0}
+{"id":"cls-009","text":"Memory deletion still returns recalled facts","label":"bug","prediction":"bug","latency_ms":126,"cost_usd":0.0}
+{"id":"cls-010","text":"Support dark theme tokens for embedded widget","label":"feature","prediction":"feature","latency_ms":119,"cost_usd":0.0}
+{"id":"cls-011","text":"API reference missing POST /widget/session payload","label":"docs","prediction":"docs","latency_ms":112,"cost_usd":0.0}
+{"id":"cls-012","text":"What labels are emitted by the classifier?","label":"question","prediction":"question","latency_ms":103,"cost_usd":0.0}
+{"id":"cls-013","text":"RAG citations show the wrong issue title","label":"bug","prediction":"bug","latency_ms":130,"cost_usd":0.0}
+{"id":"cls-014","text":"Add configurable sync interval for knowledge source","label":"feature","prediction":"feature","latency_ms":121,"cost_usd":0.0}
+{"id":"cls-015","text":"Quickstart does not mention Vault token requirements","label":"docs","prediction":"docs","latency_ms":108,"cost_usd":0.0}
+{"id":"cls-016","text":"Is there a way to disable memory writes?","label":"question","prediction":"question","latency_ms":100,"cost_usd":0.0}
+{"id":"cls-017","text":"NER drops class names with underscores","label":"bug","prediction":"bug","latency_ms":124,"cost_usd":0.0}
+{"id":"cls-018","text":"Please add GitLab issue ingestion later","label":"feature","prediction":"feature","latency_ms":127,"cost_usd":0.0}
+{"id":"cls-019","text":"The model artifact contract needs an example hash","label":"docs","prediction":"docs","latency_ms":109,"cost_usd":0.0}
+{"id":"cls-020","text":"Where is the eval report stored?","label":"question","prediction":"question","latency_ms":102,"cost_usd":0.0}
+{"id":"cls-021","text":"Invite acceptance fails after password reset","label":"bug","prediction":"bug","latency_ms":125,"cost_usd":0.0}
+{"id":"cls-022","text":"Add CSV export for admin memory inspection","label":"feature","prediction":"feature","latency_ms":116,"cost_usd":0.0}
+{"id":"cls-023","text":"Document the host signed token format","label":"docs","prediction":"docs","latency_ms":111,"cost_usd":0.0}
+{"id":"cls-024","text":"Can admins inspect deleted memory entries?","label":"question","prediction":"question","latency_ms":104,"cost_usd":0.0}
+{"id":"cls-025","text":"Classify endpoint returns 500 on empty body","label":"bug","prediction":"bug","latency_ms":128,"cost_usd":0.0}

@@ -7,9 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import hvac
-from minio import Minio
-
 from app.domain.errors import BootValidationError
 
 
@@ -46,6 +43,8 @@ class ArtifactStore:
             return self._verify_local(Path(local_dir))
 
         access_key, secret_key = _read_minio_secrets()
+        from minio import Minio
+
         client = Minio(self.endpoint, access_key=access_key, secret_key=secret_key, secure=self.secure)
         try:
             card_bytes = _read_object(client, self.bucket, self.card_key)
@@ -126,6 +125,8 @@ def _read_object(client: Minio, bucket: str, key: str) -> bytes:
 
 
 def _read_minio_secrets() -> tuple[str, str]:
+    import hvac
+
     token = os.getenv("VAULT_ROOT_TOKEN")
     if not token:
         raise BootValidationError("Vault token is required at startup.")

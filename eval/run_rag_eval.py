@@ -4,6 +4,8 @@ import json
 import sys
 from pathlib import Path
 
+from report import write_eval_report
+
 GOLDEN_PATH = Path(__file__).parent / "golden" / "rag" / "questions.jsonl"
 THRESHOLDS_PATH = Path(__file__).parents[1] / "eval_thresholds.yaml"
 
@@ -18,6 +20,7 @@ def main() -> int:
         for name in ("context_recall", "faithfulness", "answer_relevancy")
         if metrics[name] < thresholds[name]
     ]
+    write_eval_report(kind="rag", metrics=metrics, passed=not failed)
     if failed:
         print(f"RAG eval failed thresholds: {', '.join(failed)}", file=sys.stderr)
         return 1

@@ -6,6 +6,7 @@ from uuid import UUID
 from app.domain.errors import NotFoundError, ToolFailure
 from app.domain.knowledge import Citation, RagAnswer, RagQuery
 from app.infra.anthropic import AnthropicClient
+from app.infra.tracing import traced_call
 
 if TYPE_CHECKING:
     from app.services.retrieval import RetrievalService
@@ -30,11 +31,12 @@ class RagService:
     async def answer(self, query: RagQuery) -> RagAnswer:
         source_id = self.source_id_override or self._active_source_id()
 
-        retrieved = await self.retrieval.search(
-            source_id=source_id,
-            question=query.question,
-            filters=query.filters,
-        )
+        with traced_call("rag", "retrieval", {"question": query.question, "filters": query.filters or {}}):
+            retrieved = await self.retrieval.search(
+                source_id=source_id,
+                question=query.question,
+                filters=query.filters,
+            )
         if not retrieved:
             return RagAnswer(answer="I do not have enough grounded material to answer that.", grounded=False)
 

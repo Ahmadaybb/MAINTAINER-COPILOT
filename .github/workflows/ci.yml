@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: services/widget/package-lock.json
+      - name: Install API test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e services/api -e services/modelserver pytest httpx
+      - name: Install widget dependencies
+        working-directory: services/widget
+        run: npm ci
+      - name: API import layer guard
+        run: |
+          ! grep -R -E "^(from|import) (sqlalchemy|redis|anthropic)" services/api/app/api --include='*.py'
+      - name: Secret scan outside Vault
+        run: |
+          ! grep -R -I -E "(sk-ant-|ghp_|github_pat_|AKIA[0-9A-Z]{16})" . \
+            --exclude-dir=.git --exclude-dir=node_modules --exclude=package-lock.json
+      - name: Python tests
+        env:
+          PYTHONPATH: services/api:services/modelserver
+        run: pytest services/api/tests services/modelserver/tests -q
+      - name: Widget lint and build
+        working-directory: services/widget
+        run: |
+          npm run lint
+          npm run build
+      - name: Classification eval
+        run: python eval/run_classification_eval.py
+      - name: RAG eval
+        run: python eval/run_rag_eval.py
