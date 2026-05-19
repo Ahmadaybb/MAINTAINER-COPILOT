@@ -1,5 +1,6 @@
 from app.repositories.models.base import Base
 from app.repositories.models.invitation import Invitation
+from app.repositories.models.knowledge import DocumentChunk, KnowledgeSource
 from app.repositories.models.user import User
 
-__all__ = ["Base", "Invitation", "User"]
+__all__ = ["Base", "DocumentChunk", "Invitation", "KnowledgeSource", "User"]
