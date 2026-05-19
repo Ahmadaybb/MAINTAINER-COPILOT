@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime, timedelta
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi_users import BaseUserManager, UUIDIDMixin
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy
+from fastapi_users.jwt import generate_jwt
 from fastapi_users.password import PasswordHelper
 
 from app.domain.user import AuthenticatedUser, UserRole
@@ -51,3 +54,28 @@ def user_from_token_payload(payload: dict[str, object]) -> AuthenticatedUser:
         role=role,
         is_active=bool(payload.get("is_active", True)),
     )
+
+
+def hash_password(password: str) -> str:
+    return password_helper.hash(password)
+
+
+def verify_password(password: str, hashed_password: str | None) -> bool:
+    if not hashed_password:
+        return False
+    verified, _updated_hash = password_helper.verify_and_update(password, hashed_password)
+    return verified
+
+
+def create_access_token(user: AuthenticatedUser, lifetime_seconds: int = 3600) -> str:
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role.value,
+        "is_active": user.is_active,
+        "aud": ["fastapi-users:auth"],
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(seconds=lifetime_seconds)).timestamp()),
+    }
+    return generate_jwt(payload, get_app_secrets().jwt_signing_key)

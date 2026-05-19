@@ -9,7 +9,9 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.api.admin_invitations import router as admin_invitations_router
 from app.api.deps import RequestIdMiddleware
+from app.api.auth import router as auth_router
 from app.api.triage import router as triage_router
 from app.domain.errors import (
     BootValidationError,
@@ -34,6 +36,7 @@ STATUS_BY_CODE = {
     "tool_failure": 502,
     "validation_error": 400,
     "upstream_unavailable": 503,
+    "gone": 410,
     "boot_validation_error": 503,
 }
 
@@ -99,6 +102,8 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     app = FastAPI(title="Maintainer's Copilot API")
     app.state.ready = False
     app.add_middleware(RequestIdMiddleware)
+    app.include_router(auth_router)
+    app.include_router(admin_invitations_router)
     app.include_router(triage_router)
 
     @app.on_event("startup")

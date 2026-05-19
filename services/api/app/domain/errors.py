@@ -41,6 +41,11 @@ class ValidationError(DomainError):
         super().__init__(message=message, code="validation_error")
 
 
+class GoneError(DomainError):
+    def __init__(self, message: str = "The requested resource is no longer available.") -> None:
+        super().__init__(message=message, code="gone")
+
+
 class BootValidationError(DomainError):
     def __init__(self, message: str = "The service failed startup validation.") -> None:
         super().__init__(message=message, code="boot_validation_error")
