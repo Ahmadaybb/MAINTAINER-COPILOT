@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Local environment
+.env
+!.env.example
+
+# Model artifacts: track cards, ignore weights/assets.
+models/**
+!models/
+!models/README.md
+!models/**/
+!models/**/model_card.json
+
+# Generated eval output
+eval_report.json

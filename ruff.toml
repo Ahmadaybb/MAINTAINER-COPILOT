@@ -1,0 +1,18 @@
+target-version = "py311"
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "TID"]
+
+[lint.flake8-tidy-imports.banned-api]
+"sqlalchemy" = { msg = "Routers must not import SQLAlchemy; use services and repositories." }
+"redis" = { msg = "Routers must not import Redis; use service-layer adapters." }
+"anthropic" = { msg = "Routers must not import Anthropic; use infra adapters through services." }
+
+[lint.per-file-ignores]
+"**/app/domain/**/*.py" = ["TID251"]
+"**/app/infra/**/*.py" = ["TID251"]
+"**/app/repositories/**/*.py" = ["TID251"]
+"**/app/services/**/*.py" = ["TID251"]
+"**/tests/**/*.py" = ["TID251"]
+"**/alembic/**/*.py" = ["TID251"]

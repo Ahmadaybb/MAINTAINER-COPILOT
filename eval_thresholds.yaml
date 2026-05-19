@@ -1,0 +1,6 @@
+classification:
+  macro_f1: 0.70
+rag:
+  context_recall: 0.70
+  faithfulness: 0.80
+  answer_relevancy: 0.75

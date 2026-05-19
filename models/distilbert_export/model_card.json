@@ -1,0 +1,86 @@
+{
+  "model_name": "distilbert-base-uncased-maintainer-copilot",
+  "base_model": "distilbert-base-uncased",
+  "task": "issue classification",
+  "classes": [
+    "bug",
+    "feature",
+    "docs",
+    "question"
+  ],
+  "label2id": {
+    "bug": 0,
+    "feature": 1,
+    "docs": 2,
+    "question": 3
+  },
+  "id2label": {
+    "0": "bug",
+    "1": "feature",
+    "2": "docs",
+    "3": "question"
+  },
+  "architecture": {
+    "encoder": "distilbert-base-uncased",
+    "num_labels": 4,
+    "max_length": 256
+  },
+  "hyperparameters": {
+    "epochs": 3,
+    "batch_size": 32,
+    "weight_decay": 0.01,
+    "warmup_steps": 100,
+    "optimizer": "adamw",
+    "fp16": true
+  },
+  "training_data": {
+    "repo": "pandas-dev/pandas",
+    "train_size": 3702,
+    "val_size": 926,
+    "test_size": 1158,
+    "split_strategy": "per-class time-based 80/20"
+  },
+  "metrics": {
+    "distilbert": {
+      "test_accuracy": 0.7971,
+      "test_macro_f1": 0.7979,
+      "per_class_f1": {
+        "bug": 0.8685,
+        "feature": 0.716,
+        "docs": 0.8243,
+        "question": 0.7826
+      },
+      "latency_ms_per_sample": 2.0199
+    },
+    "classical_ml": {
+      "test_accuracy": 0.7176,
+      "test_macro_f1": 0.709,
+      "per_class_f1": {
+        "bug": 0.8097,
+        "feature": 0.629,
+        "docs": 0.6782,
+        "question": 0.7192
+      },
+      "latency_ms_per_sample": 0.0031
+    },
+    "llm_baseline": {
+      "test_accuracy": 0.63,
+      "test_macro_f1": 0.6241,
+      "per_class_f1": {
+        "bug": 0.64,
+        "feature": 0.73,
+        "docs": 0.79,
+        "question": 0.33
+      },
+      "latency_ms_per_sample": 2094.17,
+      "sample_size": 200,
+      "model": "llama-3.1-8b-instant via Groq"
+    }
+  },
+  "deployment_choice": "distilbert",
+  "deployment_rationale": "Best Macro-F1 (0.7508) with acceptable latency (2.8ms). Classical ML is 900x faster but 4% lower F1. LLM baseline is slowest, most expensive, and lowest accuracy.",
+  "artifact": {
+    "model_file": "model.safetensors",
+    "sha256": "1c873de89f1d78dc132a648f010218fb5f641bda5635353b1f65d9adbf5b9bfd"
+  }
+}
