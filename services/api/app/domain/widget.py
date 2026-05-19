@@ -50,3 +50,13 @@ class PublicWidgetConfig(BaseModel):
     theme: dict
     greeting: str
     enabled_tools: list[str]
+
+
+class WidgetSessionRequest(BaseModel):
+    widget_id: UUID
+    host_token: str | None = None
+
+
+class WidgetSessionResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

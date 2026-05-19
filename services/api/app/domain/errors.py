@@ -21,6 +21,11 @@ class PermissionDenied(DomainError):
         super().__init__(message=message, code="permission_denied")
 
 
+class UnauthorizedError(DomainError):
+    def __init__(self, message: str = "Authentication is required.") -> None:
+        super().__init__(message=message, code="unauthorized")
+
+
 class ToolFailure(DomainError):
     def __init__(self, message: str = "A tool failed but the conversation can continue.") -> None:
         super().__init__(message=message, code="tool_failure")

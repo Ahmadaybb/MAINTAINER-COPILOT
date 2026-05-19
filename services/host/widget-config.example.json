@@ -1,0 +1,14 @@
+{
+  "id": "00000000-0000-4000-8000-000000000001",
+  "name": "Local demo host",
+  "theme": {
+    "color": "#0f172a",
+    "background": "#ffffff",
+    "accent": "#2563eb",
+    "fontFamily": "Inter, system-ui, sans-serif"
+  },
+  "allowed_origins": ["http://localhost:8080"],
+  "greeting": "Ask about this project",
+  "enabled_tools": ["triage", "rag_search", "write_memory"],
+  "host_token_verify_key": "replace-with-demo-host-verify-key"
+}

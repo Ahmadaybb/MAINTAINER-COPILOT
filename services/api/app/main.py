@@ -36,6 +36,7 @@ THRESHOLDS_PATH = Path(__file__).resolve().parents[3] / "eval_thresholds.yaml"
 
 STATUS_BY_CODE = {
     "not_found": 404,
+    "unauthorized": 401,
     "permission_denied": 403,
     "rate_limited": 429,
     "tool_failure": 502,

@@ -8,8 +8,18 @@ export default [
     ignores: ["dist"],
   },
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
+      globals: {
+        Boolean: "readonly",
+        document: "readonly",
+        fetch: "readonly",
+        JSON: "readonly",
+        Number: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        window: "readonly",
+      },
       parserOptions: {
         ecmaFeatures: { jsx: true },
         ecmaVersion: "latest",

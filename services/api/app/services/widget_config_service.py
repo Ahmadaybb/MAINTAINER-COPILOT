@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
+import json
 from collections.abc import Callable
+from types import SimpleNamespace
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from app.domain.errors import NotFoundError
-from app.domain.widget import PublicWidgetConfig, WidgetConfigCreate, WidgetConfigRead, WidgetConfigUpdate
+from app.domain.errors import NotFoundError, UnauthorizedError
+from app.domain.widget import (
+    PublicWidgetConfig,
+    WidgetConfigCreate,
+    WidgetConfigRead,
+    WidgetConfigUpdate,
+    WidgetSessionRequest,
+    WidgetSessionResponse,
+)
 
 if TYPE_CHECKING:
     from app.repositories.widgets import WidgetConfigRepository
@@ -13,6 +26,7 @@ if TYPE_CHECKING:
 
 EMPTY_ORIGINS_WARNING = "This widget will not load anywhere until at least one allowed origin is added."
 EMBED_SNIPPET_TEMPLATE = '<script src="/widget.js" data-widget-id="{widget_id}" async></script>'
+GENERIC_WIDGET_AUTH_ERROR = "Widget authentication failed."
 
 
 class WidgetConfigService:
@@ -21,9 +35,11 @@ class WidgetConfigService:
         *,
         sessionmaker: Callable[[], Any] | None = None,
         repository_factory: Callable[[Any], WidgetConfigRepository] | None = None,
+        token_minter: Callable[[Any], str] | None = None,
     ) -> None:
         self._sessionmaker = sessionmaker
         self._repository_factory = repository_factory
+        self._token_minter = token_minter
 
     def create(self, payload: WidgetConfigCreate, *, created_by: UUID) -> WidgetConfigRead:
         with self._session() as session:
@@ -68,6 +84,28 @@ class WidgetConfigService:
             session.commit()
             return self._to_domain(updated)
 
+    def create_widget_session(self, payload: WidgetSessionRequest) -> WidgetSessionResponse:
+        config = self.get(payload.widget_id)
+        if not payload.host_token:
+            raise UnauthorizedError(GENERIC_WIDGET_AUTH_ERROR)
+        host_identity = verify_host_token(
+            host_token=payload.host_token,
+            verify_key=config.host_token_verify_key,
+            widget_id=payload.widget_id,
+        )
+        try:
+            subject = UUID(str(host_identity["sub"]))
+            email = str(host_identity.get("email", f"widget-{subject}@example.com"))
+            user = SimpleNamespace(
+                id=subject,
+                email=email,
+                role=SimpleNamespace(value="user"),
+                is_active=True,
+            )
+        except Exception as exc:  # noqa: BLE001 - keep widget auth failures generic.
+            raise UnauthorizedError(GENERIC_WIDGET_AUTH_ERROR) from exc
+        return WidgetSessionResponse(access_token=self._mint_access_token(user))
+
     def _session(self):
         if self._sessionmaker is not None:
             return self._sessionmaker()
@@ -98,6 +136,13 @@ class WidgetConfigService:
             warnings=[EMPTY_ORIGINS_WARNING] if not allowed_origins else [],
         )
 
+    def _mint_access_token(self, user: Any) -> str:
+        if self._token_minter is not None:
+            return self._token_minter(user)
+        from app.infra.auth import create_access_token
+
+        return create_access_token(user, lifetime_seconds=900)
+
 
 def public_widget_config(config: WidgetConfigRead) -> PublicWidgetConfig:
     return PublicWidgetConfig(
@@ -120,3 +165,57 @@ def widget_origin_policy_headers(
     if request_origin and request_origin in allowed_origins:
         headers["Access-Control-Allow-Origin"] = request_origin
     return headers
+
+
+def verify_host_token(*, host_token: str, verify_key: str, widget_id: UUID) -> dict[str, object]:
+    try:
+        header_segment, payload_segment, signature_segment = host_token.split(".")
+        signing_input = f"{header_segment}.{payload_segment}".encode("ascii")
+        expected_signature = _b64url_encode(
+            hmac.new(verify_key.encode("utf-8"), signing_input, hashlib.sha256).digest()
+        )
+        if not hmac.compare_digest(signature_segment, expected_signature):
+            raise ValueError("bad signature")
+        header = _decode_json_segment(header_segment)
+        payload = _decode_json_segment(payload_segment)
+        if header.get("alg") != "HS256" or header.get("typ") != "JWT":
+            raise ValueError("unsupported token")
+        expires_at = int(payload["exp"])
+        if expires_at <= int(datetime.now(UTC).timestamp()):
+            raise ValueError("expired token")
+        if str(payload.get("widget_id")) != str(widget_id):
+            raise ValueError("wrong widget")
+        if not payload.get("sub"):
+            raise ValueError("missing subject")
+        return payload
+    except Exception as exc:  # noqa: BLE001 - hide token diagnostics from widget callers.
+        raise UnauthorizedError(GENERIC_WIDGET_AUTH_ERROR) from exc
+
+
+def sign_host_token(*, payload: dict[str, object], verify_key: str) -> str:
+    header = {"alg": "HS256", "typ": "JWT"}
+    header_segment = _b64url_json(header)
+    payload_segment = _b64url_json(payload)
+    signing_input = f"{header_segment}.{payload_segment}".encode("ascii")
+    signature = _b64url_encode(hmac.new(verify_key.encode("utf-8"), signing_input, hashlib.sha256).digest())
+    return f"{header_segment}.{payload_segment}.{signature}"
+
+
+def _decode_json_segment(segment: str) -> dict[str, object]:
+    raw = base64.urlsafe_b64decode(_pad_b64(segment))
+    value = json.loads(raw.decode("utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("segment is not an object")
+    return value
+
+
+def _b64url_json(value: dict[str, object]) -> str:
+    return _b64url_encode(json.dumps(value, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+
+
+def _b64url_encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+
+def _pad_b64(value: str) -> bytes:
+    return (value + "=" * (-len(value) % 4)).encode("ascii")

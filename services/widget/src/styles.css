@@ -1,0 +1,126 @@
+:root {
+  color: #0f172a;
+  background: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: transparent;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.copilot-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  color: var(--copilot-color);
+  background: var(--copilot-background);
+}
+
+.copilot-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.copilot-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--copilot-accent);
+}
+
+.copilot-header h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.copilot-status {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #f59e0b;
+  flex: 0 0 auto;
+}
+
+.copilot-status.ready {
+  background: #16a34a;
+}
+
+.copilot-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.copilot-tools button,
+.copilot-composer button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 12px;
+  color: #ffffff;
+  background: var(--copilot-accent);
+  cursor: pointer;
+}
+
+.copilot-thread {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.assistant-message,
+.user-message {
+  max-width: 86%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  line-height: 1.45;
+}
+
+.assistant-message {
+  color: var(--copilot-color);
+  background: #ffffff;
+}
+
+.user-message {
+  align-self: flex-end;
+  color: #ffffff;
+  background: var(--copilot-accent);
+}
+
+.copilot-composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.copilot-composer input {
+  min-width: 0;
+  height: 40px;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 6px;
+  padding: 0 12px;
+}
