@@ -13,10 +13,12 @@ An authenticated copilot for open-source maintainers. It triages GitHub issues, 
 ## Quickstart
 
 1. Copy `.env.example` to `.env` and keep only the documented Vault token and port values.
+   Set `GROQ_API_KEY` in your shell before starting Vault bootstrap; do not commit it to `.env`.
 2. Ensure model artifacts are available under `models/distilbert_export/` or in MinIO with a matching `model_card.json` SHA-256.
 3. Start the stack:
 
-```bash
+```powershell
+$env:GROQ_API_KEY="your-rotated-groq-key"
 docker compose up -d vault vault-bootstrap db redis minio modelserver api chatbot widget host
 ```
 
@@ -46,7 +48,7 @@ The CI workflow enforces eval thresholds, redaction/fail-closed tests, widget bu
 
 ## Constitution Notes
 
-- API routers stay HTTP-only and do not import SQLAlchemy, Redis, or Anthropic.
+- API routers stay HTTP-only and do not import SQLAlchemy, Redis, or LLM provider SDKs.
 - Streamlit and widget clients use the API over HTTP only.
 - Secrets are resolved from Vault at startup.
 - Redaction runs before logs, spans, and memory persistence.

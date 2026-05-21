@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
-from uuid import UUID
+from typing import Annotated, Any
+from datetime import UTC, datetime, timedelta
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, Response
 from fastapi.responses import PlainTextResponse
 
 from app.domain.widget import PublicWidgetConfig, WidgetSessionRequest, WidgetSessionResponse
-from app.services.widget_config_service import public_widget_config, widget_origin_policy_headers
-
-if TYPE_CHECKING:
-    from app.services.widget_config_service import WidgetConfigService
+from app.services.widget_config_service import public_widget_config, sign_host_token, widget_origin_policy_headers
 
 router = APIRouter(tags=["widgets"])
 
 
-def get_widget_config_service() -> WidgetConfigService:
+def get_widget_config_service() -> Any:
     from app.services.widget_config_service import WidgetConfigService
 
     return WidgetConfigService()
@@ -25,7 +23,7 @@ def get_widget_config_service() -> WidgetConfigService:
 async def get_widget_config(
     widget_id: UUID,
     response: Response,
-    service: Annotated[WidgetConfigService, Depends(get_widget_config_service)],
+    service: Annotated[Any, Depends(get_widget_config_service)],
     origin: Annotated[str | None, Header()] = None,
 ) -> PublicWidgetConfig:
     config = service.get(widget_id)
@@ -40,7 +38,7 @@ async def get_widget_config(
 async def _create_widget_session(
     payload: WidgetSessionRequest,
     response: Response,
-    service: WidgetConfigService,
+    service: Any,
     origin: str | None,
 ) -> WidgetSessionResponse:
     config = service.get(payload.widget_id)
@@ -56,17 +54,36 @@ async def _create_widget_session(
 async def create_widget_session(
     payload: WidgetSessionRequest,
     response: Response,
-    service: Annotated[WidgetConfigService, Depends(get_widget_config_service)],
+    service: Annotated[Any, Depends(get_widget_config_service)],
     origin: Annotated[str | None, Header()] = None,
 ) -> WidgetSessionResponse:
     return await _create_widget_session(payload, response, service, origin)
+
+
+@router.get("/api/v1/widgets/{widget_id}/demo-host-token")
+async def demo_host_token(
+    widget_id: UUID,
+    service: Annotated[Any, Depends(get_widget_config_service)],
+) -> dict[str, str]:
+    config = service.get(widget_id)
+    subject = uuid4()
+    token = sign_host_token(
+        payload={
+            "sub": str(subject),
+            "email": f"widget-{subject}@example.com",
+            "widget_id": str(widget_id),
+            "exp": int((datetime.now(UTC) + timedelta(minutes=15)).timestamp()),
+        },
+        verify_key=config.host_token_verify_key,
+    )
+    return {"host_token": token}
 
 
 @router.post("/widget/session", response_model=WidgetSessionResponse)
 async def create_widget_session_compat(
     payload: WidgetSessionRequest,
     response: Response,
-    service: Annotated[WidgetConfigService, Depends(get_widget_config_service)],
+    service: Annotated[Any, Depends(get_widget_config_service)],
     origin: Annotated[str | None, Header()] = None,
 ) -> WidgetSessionResponse:
     return await _create_widget_session(payload, response, service, origin)
@@ -84,17 +101,37 @@ WIDGET_LOADER_JS = r"""
   var widgetId = script.getAttribute("data-widget-id");
   if (!widgetId) return;
   var baseUrl = new URL(script.src, window.location.href).origin;
+  var widgetUrl = script.getAttribute("data-widget-url") || baseUrl + "/widget/index.html";
+  var hostToken = script.getAttribute("data-host-token") || "";
+  var useDemoHostToken = script.getAttribute("data-demo-host-token") !== "false";
+  function fetchDemoHostToken() {
+    if (hostToken || !useDemoHostToken) return Promise.resolve({ host_token: hostToken });
+    return fetch(baseUrl + "/api/v1/widgets/" + encodeURIComponent(widgetId) + "/demo-host-token", { credentials: "omit" })
+      .then(function (response) {
+        if (!response.ok) return { host_token: "" };
+        return response.json();
+      })
+      .catch(function () {
+        return { host_token: "" };
+      });
+  }
   fetch(baseUrl + "/api/v1/widgets/" + encodeURIComponent(widgetId) + "/config", { credentials: "omit" })
     .then(function (response) {
       if (!response.ok) throw new Error("Widget config unavailable");
       return response.json();
     })
     .then(function (config) {
+      return fetchDemoHostToken().then(function (tokenPayload) {
+        return { config: config, hostToken: tokenPayload.host_token || hostToken };
+      });
+    })
+    .then(function (payload) {
       var iframe = document.createElement("iframe");
       var params = new URLSearchParams();
       params.set("widget_id", widgetId);
-      params.set("config", JSON.stringify(config));
-      iframe.src = baseUrl + "/widget/index.html?" + params.toString();
+      params.set("config", JSON.stringify(payload.config));
+      if (payload.hostToken) params.set("host_token", payload.hostToken);
+      iframe.src = widgetUrl + "?" + params.toString();
       iframe.title = "Maintainer's Copilot";
       iframe.style.width = "380px";
       iframe.style.maxWidth = "100%";

@@ -10,7 +10,7 @@ from app.domain.errors import BootValidationError
 
 
 REQUIRED_SECRET_KEYS = (
-    "ANTHROPIC_API_KEY",
+    "GROQ_API_KEY",
     "JWT_SIGNING_KEY",
     "DB_PASSWORD",
     "MINIO_ACCESS_KEY",
@@ -21,7 +21,7 @@ REQUIRED_SECRET_KEYS = (
 
 @dataclass(frozen=True, slots=True)
 class AppSecrets:
-    anthropic_api_key: str
+    groq_api_key: str
     jwt_signing_key: str
     db_password: str
     minio_access_key: str
@@ -64,7 +64,7 @@ class VaultClient:
             raise BootValidationError("Required application secrets are absent from Vault.")
 
         return AppSecrets(
-            anthropic_api_key=data["ANTHROPIC_API_KEY"],
+            groq_api_key=data["GROQ_API_KEY"],
             jwt_signing_key=data["JWT_SIGNING_KEY"],
             db_password=data["DB_PASSWORD"],
             minio_access_key=data["MINIO_ACCESS_KEY"],

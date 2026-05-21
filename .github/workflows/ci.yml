@@ -26,10 +26,10 @@ jobs:
         run: npm ci
       - name: API import layer guard
         run: |
-          ! grep -R -E "^(from|import) (sqlalchemy|redis|anthropic)" services/api/app/api --include='*.py'
+          ! grep -R -E "^(from|import) (sqlalchemy|redis|anthropic|groq)" services/api/app/api --include='*.py'
       - name: Secret scan outside Vault
         run: |
-          ! grep -R -I -E "(sk-ant-|ghp_|github_pat_|AKIA[0-9A-Z]{16})" . \
+          ! grep -R -I -E "(sk-ant-|gsk_[A-Za-z0-9]{20,}|ghp_|github_pat_|AKIA[0-9A-Z]{16})" . \
             --exclude-dir=.git --exclude-dir=node_modules --exclude=package-lock.json
       - name: Python tests
         env:

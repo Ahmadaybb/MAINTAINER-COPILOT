@@ -13,7 +13,7 @@ from app.domain.memory import (
     MessageRole,
 )
 from app.domain.triage import TriageRequest
-from app.infra.anthropic import AnthropicClient
+from app.infra.groq import GroqClient
 from app.infra.redaction import redact, redact_text
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ class ChatService:
         long_term_memory: LongTermMemoryService | None = None,
         triage: TriageService | None = None,
         rag: RagService | None = None,
-        anthropic: AnthropicClient | None = None,
+        llm: GroqClient | None = None,
     ) -> None:
         if short_term_memory is None:
             from app.services.short_term_memory import ShortTermMemory
@@ -56,7 +56,7 @@ class ChatService:
         self.long_term_memory = long_term_memory
         self.triage = triage
         self.rag = rag
-        self.anthropic = anthropic or AnthropicClient()
+        self.llm = llm or GroqClient()
 
     def create_session(self, user_id: UUID) -> ChatSessionResponse:
         from app.repositories.db import get_sessionmaker
@@ -122,16 +122,19 @@ class ChatService:
                 tool_calls.append(ChatToolCall(name="classify_issue", ok=False, note=exc.message))
                 notes.append("One triage tool failed, but I can still continue the conversation.")
 
+        should_use_rag = _should_use_rag(redacted_content)
         try:
             from app.domain.knowledge import RagQuery
 
             rag_answer = await self.rag.answer(RagQuery(question=redacted_content))
-            tool_calls.append(ChatToolCall(name="rag_search", ok=rag_answer.grounded))
+            if should_use_rag or rag_answer.grounded:
+                tool_calls.append(ChatToolCall(name="rag_search", ok=rag_answer.grounded))
             if rag_answer.grounded:
                 notes.append(rag_answer.answer)
         except (NotFoundError, ToolFailure) as exc:
-            tool_calls.append(ChatToolCall(name="rag_search", ok=False, note=getattr(exc, "message", str(exc))))
-            notes.append("I do not have grounded repository context for that yet.")
+            if should_use_rag:
+                tool_calls.append(ChatToolCall(name="rag_search", ok=False, note=getattr(exc, "message", str(exc))))
+                notes.append("I do not have grounded repository context for that yet.")
 
         if not notes:
             notes.append(await self._plain_response(redacted_content))
@@ -179,7 +182,7 @@ class ChatService:
     async def _plain_response(self, content: str) -> str:
         prompt = CHAT_SYSTEM_PROMPT.read_text(encoding="utf-8")
         try:
-            return await self.anthropic.complete(
+            return await self.llm.complete(
                 system_prompt=prompt,
                 user_prompt=content,
                 max_tokens=500,
@@ -189,16 +192,62 @@ class ChatService:
 
 
 def _should_remember(content: str) -> bool:
-    return "remember" in content.lower()
+    lowered = content.strip().lower()
+    explicit_prefixes = (
+        "remember:",
+        "remember ",
+        "please remember",
+        "save this:",
+        "save this ",
+        "store this:",
+        "store this ",
+        "note that",
+    )
+    return any(lowered.startswith(prefix) for prefix in explicit_prefixes)
 
 
 def _memory_content(content: str) -> str:
-    lowered = content.lower()
-    marker = "remember"
-    index = lowered.find(marker)
-    return content[index + len(marker) :].strip(" :,-") if index >= 0 else content
+    stripped = content.strip()
+    lowered = stripped.lower()
+    prefixes = (
+        "please remember",
+        "remember",
+        "save this",
+        "store this",
+        "note that",
+    )
+    for prefix in prefixes:
+        if lowered.startswith(prefix):
+            return stripped[len(prefix) :].strip(" :,-")
+    return stripped
 
 
 def _looks_like_issue(content: str) -> bool:
     markers = ("error", "bug", "traceback", "exception", "feature", "docs", "issue")
     return any(marker in content.lower() for marker in markers)
+
+
+def _should_use_rag(content: str) -> bool:
+    lowered = content.lower()
+    knowledge_markers = (
+        "project",
+        "repo",
+        "repository",
+        "docs",
+        "documentation",
+        "readme",
+        "rag",
+        "knowledge",
+        "retry policy",
+        "widget",
+        "api",
+        "service",
+        "architecture",
+        "how does",
+        "how do",
+        "what does",
+        "what are the main",
+        "explain",
+        "use project knowledge",
+    )
+    return any(marker in lowered for marker in knowledge_markers)

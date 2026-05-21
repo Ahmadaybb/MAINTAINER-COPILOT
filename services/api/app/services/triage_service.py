@@ -34,6 +34,7 @@ class TriageService:
             with traced_call("tool", "classify_issue", {"issue_text": issue_text, "request_id": request_id}):
                 result = await self.modelserver.classify(issue_text, request_id=request_id)
             classification = Classification.model_validate(result.model_dump())
+            classification = _apply_label_safety_rules(issue_text, classification)
         except (ToolFailure, UpstreamUnavailable) as exc:
             notes.append(exc.message)
 
@@ -65,3 +66,33 @@ def _fallback_summary(issue_text: str) -> str:
     if len(text) <= 280:
         return text
     return f"{text[:277]}..."
+
+
+def _apply_label_safety_rules(issue_text: str, classification: Classification) -> Classification:
+    lowered = issue_text.lower()
+    bug_markers = (
+        "bug",
+        "crash",
+        "crashes",
+        "error",
+        "exception",
+        "traceback",
+        "cannot",
+        "can't",
+        "failed",
+        "fails",
+        "failure",
+        "500",
+        "exit code",
+        "typeerror",
+        "valueerror",
+    )
+    if classification.label != "bug" and any(marker in lowered for marker in bug_markers):
+        return classification.model_copy(
+            update={
+                "label": "bug",
+                "confidence": max(classification.confidence, 0.75),
+                "low_confidence": False,
+            }
+        )
+    return classification

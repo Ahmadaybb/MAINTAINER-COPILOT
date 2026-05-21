@@ -24,3 +24,7 @@ models/**
 
 # Generated eval output
 eval_report.json
+eval_report.*.json
+
+# Local assistant tooling
+.claude/

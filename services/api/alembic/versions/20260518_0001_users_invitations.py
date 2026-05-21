@@ -20,8 +20,8 @@ def upgrade() -> None:
     op.execute('CREATE EXTENSION IF NOT EXISTS "citext"')
     op.execute('CREATE EXTENSION IF NOT EXISTS "vector"')
 
-    user_role = postgresql.ENUM("user", "admin", name="user_role")
-    user_role.create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM("user", "admin", name="user_role").create(op.get_bind(), checkfirst=True)
+    user_role = postgresql.ENUM("user", "admin", name="user_role", create_type=False)
 
     op.create_table(
         "users",

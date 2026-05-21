@@ -17,7 +17,7 @@ HOST_PORT=8080
 ```
 
 No other secret goes in `.env`, source, or images. `infra/vault/bootstrap.sh` writes the real
-secrets into Vault dev on first up: `ANTHROPIC_API_KEY`, `JWT_SIGNING_KEY`, `DB_PASSWORD`,
+secrets into Vault dev on first up: `GROQ_API_KEY`, `JWT_SIGNING_KEY`, `DB_PASSWORD`,
 `MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY`, `OTEL_EXPORTER_KEY`.
 
 ## 2. Seed the model artifact (external Colab → MinIO)

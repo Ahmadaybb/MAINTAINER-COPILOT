@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.domain.errors import NotFoundError, ToolFailure
 from app.domain.knowledge import Citation, RagAnswer, RagQuery
-from app.infra.anthropic import AnthropicClient
+from app.infra.groq import GroqClient
 from app.infra.tracing import traced_call
 
 if TYPE_CHECKING:
@@ -17,15 +17,16 @@ class RagService:
         self,
         *,
         retrieval: RetrievalService | None = None,
-        anthropic: AnthropicClient | None = None,
+        llm: GroqClient | None = None,
         source_id_override: UUID | None = None,
     ) -> None:
+        llm_client = llm or GroqClient()
         if retrieval is None:
             from app.services.retrieval import RetrievalService
 
-            retrieval = RetrievalService()
+            retrieval = RetrievalService(llm=llm_client)
         self.retrieval = retrieval
-        self.anthropic = anthropic or AnthropicClient()
+        self.llm = llm_client
         self.source_id_override = source_id_override
 
     async def answer(self, query: RagQuery) -> RagAnswer:
@@ -49,7 +50,7 @@ class RagService:
             f"Question: {query.question}\n\nContext:\n{context}"
         )
         try:
-            answer = await self.anthropic.complete(
+            answer = await self.llm.complete(
                 system_prompt="You answer repository maintenance questions with citations.",
                 user_prompt=prompt,
                 max_tokens=600,

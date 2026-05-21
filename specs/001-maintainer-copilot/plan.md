@@ -13,7 +13,7 @@ short-term (Redis) and long-term (pgvector) memory, and ships as a single-script
 React widget gated by a host-signed identity handoff and an origin allowlist.
 
 Technical approach: a strictly layered FastAPI `api` service (api/services/repositories/
-domain/infra) orchestrates a single tool-calling Claude model; a separate FastAPI `modelserver`
+domain/infra) orchestrates a single tool-calling Groq-backed LLM; a separate FastAPI `modelserver`
 serves the fine-tuned classifier + NER, loading its artifact from MinIO and verifying SHA-256
 against the model card at boot (fail-closed, Principle II). All quality decisions
 (embedding model, hybrid alpha, winning classifier) are decided by numbers on committed golden
@@ -26,7 +26,7 @@ is inference-only and contains no training infrastructure.
 Vite (`widget`); SQL (PostgreSQL 16 + pgvector)
 
 **Primary Dependencies**: FastAPI, fastapi-users (JWT), SQLAlchemy 2.x + Alembic, pgvector,
-redis-py, hvac (Vault), minio, anthropic (claude-sonnet-4-20250514), sentence-transformers
+redis-py, hvac (Vault), minio, httpx (Groq OpenAI-compatible chat completions), sentence-transformers
 (all-MiniLM-L6-v2 + one alternative for comparison), rank-bm25, cross-encoder
 (ms-marco-MiniLM-L-6-v2), spaCy/HF NER pipeline, OpenTelemetry SDK + Jaeger exporter, RAGAS,
 Streamlit; Vite + React + Tailwind for the widget; nginx for the demo host
@@ -64,13 +64,13 @@ Derived from `.specify/memory/constitution.md` v1.0.0:
 
 - **Layering (I)** — ✅ PASS. `api` and `modelserver` use `app/api` (routers, HTTP only) →
   `app/services` (orchestration) → `app/repositories` (SQL/pgvector only) → `app/domain`
-  (Pydantic) with `app/infra` adapters (Vault, MinIO, Redis, Anthropic, modelserver client,
+  (Pydantic) with `app/infra` adapters (Vault, MinIO, Redis, Groq, modelserver client,
   GitHub ingest, embeddings, reranker, tracing, redaction). Routers never import SQLAlchemy/
-  Redis/Anthropic and make no external calls; repositories raise no HTTP errors and do no cache
+  Redis/LLM providers and make no external calls; repositories raise no HTTP errors and do no cache
   invalidation; Pydantic domain models are separate types from SQLAlchemy ORM models. The
   Streamlit `chatbot` talks only to the `api` over HTTP (no direct DB/Redis).
 - **Secrets & Fail-Closed Boot (II)** — ✅ PASS. `app/infra/vault.py` resolves every secret
-  (Anthropic key, JWT signing key, DB password, MinIO creds, OTel/Jaeger keys) at startup.
+  (Groq key, JWT signing key, DB password, MinIO creds, OTel/Jaeger keys) at startup.
   `api` and `modelserver` refuse to boot if Vault is unreachable, a required secret is absent,
   classifier weights are missing, the artifact SHA-256 ≠ model card, or any threshold in
   `eval_thresholds.yaml` is zero/unset. `.env.example` documents only `VAULT_ROOT_TOKEN` and
@@ -139,7 +139,7 @@ services/
 │   │   │                          #   widget config, ingestion, eval
 │   │   ├── repositories/          # SQL + pgvector access only
 │   │   ├── domain/                # Pydantic models + errors.py (domain exceptions)
-│   │   ├── infra/                 # vault, minio, redis, anthropic, modelserver_client,
+│   │   ├── infra/                 # vault, minio, redis, groq, modelserver_client,
 │   │   │                          #   github_ingest, embeddings, reranker, tracing,
 │   │   │                          #   redaction.py
 │   │   ├── bootstrap.py           # Vault resolve + fail-closed boot checks

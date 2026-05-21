@@ -39,7 +39,7 @@ gates) and one integration test per user story (each story's spec "Independent T
 - [ ] T002 [P] Create `docker-compose.yml` with services: api, chatbot, widget, modelserver, host, migrate, db (`postgres:16` + pgvector), redis (`redis:7`), minio, vault (dev mode); wire ports from env per `specs/001-maintainer-copilot/quickstart.md`
 - [ ] T003 [P] Create `.env.example` containing ONLY `VAULT_ROOT_TOKEN`, `API_PORT`, `MODELSERVER_PORT`, `CHATBOT_PORT`, `WIDGET_PORT`, `HOST_PORT` (constitution Principle II)
 - [ ] T004 [P] Create `eval_thresholds.yaml` with committed non-zero gates `classification.macro_f1`, `rag.context_recall`, `rag.faithfulness`, `rag.answer_relevancy` (non-zero is required for boot — `research.md` D12/D14)
-- [ ] T005 [P] Create `services/api/pyproject.toml` (Python 3.11; fastapi, fastapi-users[sqlalchemy], sqlalchemy>=2, alembic, pgvector, redis, hvac, minio, anthropic, sentence-transformers, rank-bm25, spacy, opentelemetry-sdk, opentelemetry-exporter-jaeger, ragas, apscheduler, pytest, httpx)
+- [ ] T005 [P] Create `services/api/pyproject.toml` (Python 3.11; fastapi, fastapi-users[sqlalchemy], sqlalchemy>=2, alembic, pgvector, redis, hvac, minio, sentence-transformers, rank-bm25, spacy, opentelemetry-sdk, opentelemetry-exporter-jaeger, ragas, apscheduler, pytest, httpx)
 - [ ] T006 [P] Create `services/modelserver/pyproject.toml` (Python 3.11; fastapi, minio, hvac, transformers, torch, scikit-learn, spacy, opentelemetry-sdk, pytest)
 - [ ] T007 [P] Create `services/chatbot/pyproject.toml` (Python 3.11; streamlit, httpx)
 - [ ] T008 [P] Create `services/widget/package.json` + `services/widget/vite.config.ts` for a single-file React+Tailwind bundle per `specs/001-maintainer-copilot/contracts/widget-embed.md`
@@ -48,7 +48,7 @@ gates) and one integration test per user story (each story's spec "Independent T
 - [ ] T011 [P] Create placeholder prompt files `prompts/chat_system.md`, `prompts/summarize_issue.md`, `prompts/hyde.md`, `prompts/llm_classifier.md` (constitution Principle V; content finalized in T085)
 - [ ] T012 [P] Create `models/README.md` summarizing `specs/001-maintainer-copilot/contracts/model-artifact.md`, and a root `.gitignore` that ignores weight files under `models/` but tracks `models/**/model_card.json`
 - [ ] T013 [P] Create `notebooks/README.md` stating training is external (Google Colab) and not part of docker-compose or CI
-- [ ] T014 [P] Add lint/format config: root `ruff.toml` + import-layer rules (forbid SQLAlchemy/Redis/anthropic imports in `**/app/api/**`), `.editorconfig`, and widget ESLint/Prettier config
+- [ ] T014 [P] Add lint/format config: root `ruff.toml` + import-layer rules (forbid SQLAlchemy/Redis/LLM-provider imports in `**/app/api/**`), `.editorconfig`, and widget ESLint/Prettier config
 
 **Checkpoint**: Repo scaffold builds; `docker compose config` is valid.
 
@@ -59,7 +59,7 @@ gates) and one integration test per user story (each story's spec "Independent T
 **⚠️ No user story may start until this phase is complete.**
 
 - [ ] T015 Create `services/api/app/domain/errors.py` defining `NotFoundError`, `PermissionDenied`, `ToolFailure`, `RateLimited`, `UpstreamUnavailable`, `ValidationError`, `BootValidationError` per `data-model.md`
-- [ ] T016 Create `services/api/app/infra/vault.py` resolving all secrets at startup (`ANTHROPIC_API_KEY`, `JWT_SIGNING_KEY`, `DB_PASSWORD`, MinIO keys, OTel key) — `research.md` D12
+- [ ] T016 Create `services/api/app/infra/vault.py` resolving all secrets at startup (`GROQ_API_KEY`, `JWT_SIGNING_KEY`, `DB_PASSWORD`, MinIO keys, OTel key) — `research.md` D12
 - [ ] T017 Create `infra/vault/bootstrap.sh` that writes those secrets into Vault dev on first compose up (referenced by `docker-compose.yml`) per `quickstart.md`
 - [ ] T018 Create `services/api/app/infra/redaction.py` — single egress redactor (secret/PII patterns) used by logging, tracing, and memory writes (constitution Principle III)
 - [ ] T019 [P] Create `services/api/app/infra/tracing.py` — OpenTelemetry tracer + Jaeger exporter + span processor that applies `redaction.py` before export (`research.md` D11)
@@ -89,7 +89,7 @@ response carries label + entities + summary.
 - [ ] T031 [P] [US1] Create `services/api/app/infra/github_issue.py` — fetch a public GitHub issue + thread by URL anonymously; map unreachable/private/deleted to `UpstreamUnavailable` (spec US1 AC4)
 - [ ] T032 [US1] Implement modelserver `/classify`: `services/modelserver/app/api/classify.py` + `services/modelserver/app/services/classifier.py` using the verified artifact; set `low_confidence` below the configured softmax margin (FR-004) per `contracts/modelserver.openapi.md`
 - [ ] T033 [US1] Implement modelserver `/ner`: `services/modelserver/app/api/ner.py` + `services/modelserver/app/services/ner.py` emitting `repo_name|error_code|version_string|symbol|file_path` (FR-005)
-- [ ] T034 [US1] Create `services/api/app/infra/anthropic.py` (claude-sonnet-4-20250514 client, prompt-cache static system+tools) and `services/api/app/services/summarize.py` using `prompts/summarize_issue.md` (`research.md` D2)
+- [ ] T034 [US1] Create `services/api/app/infra/groq.py` (Groq OpenAI-compatible chat completions client) and `services/api/app/services/summarize.py` using `prompts/summarize_issue.md` (`research.md` D2)
 - [ ] T035 [US1] Implement `services/api/app/services/triage_service.py` orchestrating classify (`modelserver_client`) + NER + summarize into one `TriageResponse`; a failing sub-tool yields a partial result + note, never a 500 (FR-024)
 - [ ] T036 [US1] Implement `services/api/app/api/triage.py` — `POST /triage` (auth required; 400 on neither/both inputs; 422 on unreachable URL; 429 on rate limit) per `contracts/api.openapi.md`
 - [ ] T037 [US1] Implement `services/api/app/services/rate_limit.py` (Redis fixed-window per user) and apply it to `/triage`; over-limit raises `RateLimited` → graceful 429 message (FR-032, `research.md` D9)
@@ -144,7 +144,7 @@ response carries label + entities + summary.
 - [ ] T056 [P] [US4] Create domain + ORM models `ConversationSession`, `Message`, `LongTermMemory` (pgvector) per `data-model.md` + Alembic migration
 - [ ] T057 [US4] Implement `services/api/app/services/short_term_memory.py` — Redis `stm:{session_id}`, TTL 3600s (`research.md` D8)
 - [ ] T058 [US4] Implement `services/api/app/api/chat.py` — `POST /chat/sessions` and `POST /chat/sessions/{id}/messages` (HTTP only)
-- [ ] T059 [US4] Implement `services/api/app/services/chat_service.py` — single tool-calling Claude loop with tools `classify_issue, extract_entities, summarize_issue, rag_search, write_memory`; `ToolFailure` caught and recovered in-loop (no 500); system prompt `prompts/chat_system.md` (FR-023/FR-024, `research.md` D10)
+- [ ] T059 [US4] Implement `services/api/app/services/chat_service.py` — single tool-calling Groq-backed LLM loop with tools `classify_issue, extract_entities, summarize_issue, rag_search, write_memory`; `ToolFailure` caught and recovered in-loop (no 500); system prompt `prompts/chat_system.md` (FR-023/FR-024, `research.md` D10)
 - [ ] T060 [US4] Implement `services/api/app/services/long_term_memory.py` recall — pgvector similarity excluding `deleted_at`, preferring non-superseded; conflicts surface most-recent + note (FR-011/FR-014)
 - [ ] T061 [P] [US4] Integration test `services/api/tests/integration/test_memory_recall.py` (US4 AC1–3); ALSO inject a failing tool (e.g., force `rag_search`/`classify_issue` to raise `ToolFailure`) mid-conversation and assert the chat loop recovers in-conversation with a graceful message and returns no 500 / no stack trace (SC-009/FR-024)
 
@@ -223,7 +223,7 @@ response carries label + entities + summary.
 
 - [ ] T079 [P] Create `eval/golden/classification/` (25 hand-curated issues + labels) + `eval/run_classification_eval.py` (accuracy, macro-F1, per-class F1, latency, cost) gated by `eval_thresholds.yaml` (FR-003/FR-027/SC-002, `research.md` D3/D14)
 - [ ] T080 Implement `eval/report.py` writing `eval_report.json`, uploading it to MinIO, diffing vs. the last green build, and recording an `EvalReport` row per `data-model.md` (constitution Principle IV)
-- [ ] T081 Create `.github/workflows/ci.yml` — lint + unit + both eval suites; fail/block merge on any below-threshold metric, on `app/api` importing SQLAlchemy/Redis/anthropic, or on a secret found outside Vault (constitution Quality Gates)
+- [ ] T081 Create `.github/workflows/ci.yml` — lint + unit + both eval suites; fail/block merge on any below-threshold metric, on `app/api` importing SQLAlchemy/Redis/LLM providers, or on a secret found outside Vault (constitution Quality Gates)
 - [ ] T082 [P] Tests `services/api/tests/unit/test_redaction.py` and `services/modelserver/tests/test_redaction.py` proving secrets/PII are stripped from logs, spans, and memory writes (constitution Principle III)
 - [ ] T083 [P] Tests `services/api/tests/integration/test_fail_closed_boot.py` and `services/modelserver/tests/test_artifact_verify.py` — refuse boot on Vault down / missing artifact / SHA-256 mismatch / zero threshold (constitution Principle II, `research.md` D12)
 - [ ] T084 [P] Test `services/api/tests/integration/test_tracing_spans.py` — every LLM/tool/RAG call emits a redacted OTel span (`research.md` D11)

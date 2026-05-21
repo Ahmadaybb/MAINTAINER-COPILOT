@@ -23,18 +23,18 @@ recorded as a decision with the metric that resolves it.
 
 - **Decision**: `modelserver` serves **only** the fine-tuned DistilBERT classifier and the NER
   pipeline (local weights from MinIO). **Summarization is LLM-driven in `api`** via
-  `prompts/summarize_issue.md` calling Claude. The chat tool `summarize_issue` calls an
+  `prompts/summarize_issue.md` calling Groq. The chat tool `summarize_issue` calls an
   api-internal summarization service, not modelserver.
 - **Rationale**: Resolves the spec's "summarizer inference" vs. "summarization is LLM-driven"
-  tension. Keeps the Anthropic key out of modelserver (smaller secret surface, Principle II)
+  tension. Keeps the Groq key out of modelserver (smaller secret surface, Principle II)
   and keeps modelserver's fail-closed boot tied only to artifact + SHA-256.
 - **Alternatives considered**: Summarization model in modelserver (rejected — no fine-tuned
-  summarizer is trained in Colab; would need Anthropic creds in two services).
+  summarizer is trained in Colab; would need LLM-provider credentials in two services).
 
 ## D3. Classifier selection (3-way comparison)
 
 - **Decision**: Train/compare in Colab: (a) fine-tuned `distilbert-base-uncased`, (b) TF-IDF +
-  LogisticRegression, (c) zero-shot via claude-sonnet-4-20250514. The **served** model is the
+  LogisticRegression, (c) zero-shot via a Groq-hosted chat model. The **served** model is the
   one with the highest **macro-F1 on the 25-item classification golden set**, subject to
   latency/cost being acceptable for ≤15 s p95 triage.
 - **Rationale**: Principle IV — selection is a number, not a preference. macro-F1 chosen over
@@ -111,14 +111,14 @@ recorded as a decision with the metric that resolves it.
 
 ## D10. Single tool-calling LLM
 
-- **Decision**: One `claude-sonnet-4-20250514` agent with tools `classify_issue`,
+- **Decision**: One Groq-backed LLM agent with tools `classify_issue`,
   `extract_entities`, `summarize_issue`, `rag_search`, `write_memory`. Tool dispatch loop in
   `app/services/chat`. Not multi-agent, not a workflow engine (spec FR-023).
 - **Rationale**: Matches spec "WHAT IT IS NOT" and stakeholder choice. Each tool maps to a
   service; tool exceptions become `ToolFailure` and are recovered in-loop (no 500, Principle V,
   FR-024).
-- **Anthropic SDK note**: system prompt from `prompts/chat_system.md`; prompt-cache the static
-  system + tool schema block; stream responses; classify/NER tools call `modelserver`.
+- **Groq adapter note**: system prompt from `prompts/chat_system.md`; keep provider calls in
+  `app/infra/groq.py`; classify/NER tools call `modelserver`.
 
 ## D11. Observability & redaction ordering
 

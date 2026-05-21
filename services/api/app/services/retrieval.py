@@ -6,7 +6,7 @@ from pathlib import Path
 from uuid import UUID
 
 from app.domain.knowledge import DocumentChunk, RetrievalFilters
-from app.infra.anthropic import AnthropicClient
+from app.infra.groq import GroqClient
 from app.infra.embeddings import EmbeddingClient
 from app.repositories.chunks import DocumentChunkRepository
 from app.repositories.db import get_sessionmaker
@@ -26,13 +26,13 @@ class RetrievalService:
         self,
         *,
         embeddings: EmbeddingClient | None = None,
-        anthropic: AnthropicClient | None = None,
+        llm: GroqClient | None = None,
         alpha: float = 0.65,
         top_k: int = 6,
         rerank_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
     ) -> None:
         self.embeddings = embeddings or EmbeddingClient()
-        self.anthropic = anthropic
+        self.llm = llm
         self.alpha = alpha
         self.top_k = top_k
         self.rerank_model_name = rerank_model_name
@@ -77,10 +77,13 @@ class RetrievalService:
         return self._rerank(question, scored[: self.top_k])
 
     async def _hyde(self, question: str) -> str:
-        if not self.anthropic:
+        if not self.llm:
             return question
         prompt = HYDE_PROMPT_PATH.read_text(encoding="utf-8")
-        return await self.anthropic.complete(system_prompt=prompt, user_prompt=question, max_tokens=160)
+        try:
+            return await self.llm.complete(system_prompt=prompt, user_prompt=question, max_tokens=160)
+        except Exception:
+            return question
 
     def _rerank(self, question: str, chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
         if not chunks:

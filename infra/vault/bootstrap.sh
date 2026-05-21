@@ -12,7 +12,7 @@ done
 vault secrets enable -path=secret kv-v2 >/dev/null 2>&1 || true
 
 vault kv put secret/maintainer-copilot \
-  ANTHROPIC_API_KEY="$(rand)" \
+  GROQ_API_KEY="${GROQ_API_KEY:-$(rand)}" \
   JWT_SIGNING_KEY="$(rand)" \
   DB_PASSWORD="$(rand)" \
   MINIO_ACCESS_KEY="$(rand)" \

@@ -18,16 +18,23 @@ depends_on = None
 
 
 def upgrade() -> None:
+    postgresql.ENUM(
+        "connecting",
+        "ready",
+        "syncing",
+        "error",
+        name="knowledge_source_status",
+    ).create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM("doc", "resolved_issue", name="document_kind").create(op.get_bind(), checkfirst=True)
     source_status = postgresql.ENUM(
         "connecting",
         "ready",
         "syncing",
         "error",
         name="knowledge_source_status",
+        create_type=False,
     )
-    document_kind = postgresql.ENUM("doc", "resolved_issue", name="document_kind")
-    source_status.create(op.get_bind(), checkfirst=True)
-    document_kind.create(op.get_bind(), checkfirst=True)
+    document_kind = postgresql.ENUM("doc", "resolved_issue", name="document_kind", create_type=False)
 
     op.create_table(
         "knowledge_sources",

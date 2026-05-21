@@ -1,3 +1,5 @@
+#GitHub repo → docs/issues → chunks → embeddings → pgvector
+
 from __future__ import annotations
 
 from app.domain.knowledge import KnowledgeSourceCreate, KnowledgeSourceRead

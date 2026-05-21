@@ -142,6 +142,7 @@ services:
     environment:
       VAULT_ADDR: http://vault:8200
       VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
     volumes:
       - ./infra/vault:/vault/bootstrap:ro
     command: ["sh", "/vault/bootstrap/bootstrap.sh"]

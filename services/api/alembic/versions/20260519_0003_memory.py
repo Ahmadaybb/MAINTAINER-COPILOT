@@ -18,10 +18,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    message_role = postgresql.ENUM("user", "assistant", "tool", name="message_role")
-    memory_source = postgresql.ENUM("inferred", "explicit", name="memory_source")
-    message_role.create(op.get_bind(), checkfirst=True)
-    memory_source.create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM("user", "assistant", "tool", name="message_role").create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM("inferred", "explicit", name="memory_source").create(op.get_bind(), checkfirst=True)
+    message_role = postgresql.ENUM("user", "assistant", "tool", name="message_role", create_type=False)
+    memory_source = postgresql.ENUM("inferred", "explicit", name="memory_source", create_type=False)
 
     op.create_table(
         "conversation_sessions",

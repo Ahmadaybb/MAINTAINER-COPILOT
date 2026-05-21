@@ -45,7 +45,7 @@ def create_app() -> FastAPI:
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/readyz")
+    @app.get("/readyz", response_model=None)
     async def readyz() -> JSONResponse | dict[str, str]:
         if not app.state.ready:
             return JSONResponse(

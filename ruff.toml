@@ -7,7 +7,8 @@ select = ["E", "F", "I", "TID"]
 [lint.flake8-tidy-imports.banned-api]
 "sqlalchemy" = { msg = "Routers must not import SQLAlchemy; use services and repositories." }
 "redis" = { msg = "Routers must not import Redis; use service-layer adapters." }
-"anthropic" = { msg = "Routers must not import Anthropic; use infra adapters through services." }
+"anthropic" = { msg = "Routers must not import LLM providers; use infra adapters through services." }
+"groq" = { msg = "Routers must not import LLM providers; use infra adapters through services." }
 
 [lint.per-file-ignores]
 "**/app/domain/**/*.py" = ["TID251"]

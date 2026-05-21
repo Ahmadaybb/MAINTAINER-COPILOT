@@ -26,8 +26,10 @@ class UserRepository:
         hashed_password: str | None,
         role: UserRole = UserRole.USER,
         is_active: bool = True,
+        user_id: UUID | None = None,
     ) -> User:
         user = User(
+            id=user_id,
             email=email.lower(),
             hashed_password=hashed_password,
             role=role,

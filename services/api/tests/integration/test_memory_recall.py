@@ -62,7 +62,7 @@ class FakeRag:
         return SimpleNamespace(grounded=False, answer="", citations=[])
 
 
-class FakeAnthropic:
+class FakeLLM:
     async def complete(self, *, system_prompt: str, user_prompt: str, max_tokens: int = 500) -> str:
         return f"Echo: {user_prompt}"
 
@@ -97,7 +97,7 @@ async def _assert_short_term_memory() -> None:
         long_term_memory=FakeLongTermMemory(),
         triage=FakeTriage(),
         rag=FakeRag(),
-        anthropic=FakeAnthropic(),
+        llm=FakeLLM(),
     )
     user_id = uuid4()
     session_id = uuid4()
@@ -121,7 +121,7 @@ async def _assert_long_term_memory() -> None:
         long_term_memory=ltm,
         triage=FakeTriage(),
         rag=FakeRag(),
-        anthropic=FakeAnthropic(),
+        llm=FakeLLM(),
     )
     user_id = uuid4()
 
@@ -154,7 +154,7 @@ async def _assert_tool_failure_recovery() -> None:
         long_term_memory=FakeLongTermMemory(),
         triage=FakeTriage(),
         rag=FakeRag(fail=True),
-        anthropic=FakeAnthropic(),
+        llm=FakeLLM(),
     )
 
     response = await service.send_message(

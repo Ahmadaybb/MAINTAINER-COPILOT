@@ -19,6 +19,8 @@ from app.domain.widget import (
     WidgetSessionRequest,
     WidgetSessionResponse,
 )
+from app.repositories.models.user import UserRole as OrmUserRole
+from app.repositories.users import UserRepository
 
 if TYPE_CHECKING:
     from app.repositories.widgets import WidgetConfigRepository
@@ -96,15 +98,39 @@ class WidgetConfigService:
         try:
             subject = UUID(str(host_identity["sub"]))
             email = str(host_identity.get("email", f"widget-{subject}@example.com"))
-            user = SimpleNamespace(
-                id=subject,
-                email=email,
-                role=SimpleNamespace(value="user"),
-                is_active=True,
-            )
         except Exception as exc:  # noqa: BLE001 - keep widget auth failures generic.
             raise UnauthorizedError(GENERIC_WIDGET_AUTH_ERROR) from exc
+        user = self._ensure_widget_user(user_id=subject, email=email)
         return WidgetSessionResponse(access_token=self._mint_access_token(user))
+
+    def _ensure_widget_user(self, *, user_id: UUID, email: str) -> Any:
+        with self._session() as session:
+            if not hasattr(session, "get") or not hasattr(session, "execute"):
+                return SimpleNamespace(
+                    id=user_id,
+                    email=email,
+                    role=SimpleNamespace(value=OrmUserRole.USER.value),
+                    is_active=True,
+                )
+            users = UserRepository(session)
+            user = users.get_by_id(user_id) or users.get_by_email(email)
+            if user is None:
+                user = users.create(
+                    user_id=user_id,
+                    email=email,
+                    hashed_password=None,
+                    role=OrmUserRole.USER,
+                    is_active=True,
+                )
+            else:
+                user.is_active = True
+            session.commit()
+            return SimpleNamespace(
+                id=user.id,
+                email=user.email,
+                role=SimpleNamespace(value=user.role.value),
+                is_active=user.is_active,
+            )
 
     def _session(self):
         if self._sessionmaker is not None:

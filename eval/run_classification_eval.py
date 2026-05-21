@@ -10,6 +10,7 @@ from report import write_eval_report
 
 GOLDEN_PATH = Path(__file__).parent / "golden" / "classification" / "issues.jsonl"
 THRESHOLDS_PATH = Path(__file__).parents[1] / "eval_thresholds.yaml"
+REPORT_PATH = Path("eval_report.classification.json")
 
 
 def main() -> int:
@@ -20,7 +21,7 @@ def main() -> int:
     metrics["cost_usd"] = round(sum(float(row.get("cost_usd", 0.0)) for row in rows), 6)
     print(json.dumps({"kind": "classification", "metrics": metrics}, indent=2, sort_keys=True))
     passed = metrics["macro_f1"] >= classification_threshold()
-    write_eval_report(kind="classification", metrics=metrics, passed=passed)
+    write_eval_report(kind="classification", metrics=metrics, passed=passed, output_path=REPORT_PATH)
     if not passed:
         print("Classification eval failed macro-F1 threshold.", file=sys.stderr)
         return 1

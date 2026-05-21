@@ -17,8 +17,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    eval_kind = postgresql.ENUM("classification", "rag", name="eval_kind")
-    eval_kind.create(op.get_bind(), checkfirst=True)
+    postgresql.ENUM("classification", "rag", name="eval_kind").create(op.get_bind(), checkfirst=True)
+    eval_kind = postgresql.ENUM("classification", "rag", name="eval_kind", create_type=False)
     op.create_table(
         "eval_reports",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),

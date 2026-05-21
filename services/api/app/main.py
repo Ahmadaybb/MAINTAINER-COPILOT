@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.admin_invitations import router as admin_invitations_router
 from app.api.admin_knowledge_source import router as admin_knowledge_source_router
@@ -93,6 +96,28 @@ def _parse_simple_yaml(raw: str) -> dict[str, dict[str, float]]:
     return parsed
 
 
+def _widget_cors_origins() -> list[str]:
+    raw = os.getenv("WIDGET_CORS_ORIGINS")
+    if raw:
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ]
+
+
+def _widget_dist_path() -> Path:
+    return Path(__file__).resolve().parents[3] / "services" / "widget" / "dist"
+
+
+def _mount_widget_static(app: FastAPI) -> None:
+    widget_dist = _widget_dist_path()
+    if widget_dist.exists():
+        app.mount("/widget", StaticFiles(directory=widget_dist, html=True), name="widget")
+
+
 async def run_boot_checks(app: FastAPI) -> None:
     get_app_secrets()
     assert_nonzero_thresholds()
@@ -109,6 +134,12 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     app = FastAPI(title="Maintainer's Copilot API")
     app.state.ready = False
     app.add_middleware(RequestIdMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_widget_cors_origins(),
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.include_router(auth_router)
     app.include_router(admin_invitations_router)
     app.include_router(admin_knowledge_source_router)
@@ -118,6 +149,7 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     app.include_router(memory_router)
     app.include_router(triage_router)
     app.include_router(widget_public_router)
+    _mount_widget_static(app)
 
     @app.on_event("startup")
     async def _startup() -> None:
@@ -148,7 +180,7 @@ def create_app(run_startup_checks: bool = True) -> FastAPI:
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/readyz")
+    @app.get("/readyz", response_model=None)
     async def readyz() -> JSONResponse | dict[str, str]:
         if not app.state.ready:
             error = UpstreamUnavailable("The API is not ready.")

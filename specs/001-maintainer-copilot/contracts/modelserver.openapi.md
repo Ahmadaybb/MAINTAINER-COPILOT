@@ -1,6 +1,6 @@
 # Contract: `modelserver` service
 
-Internal service called only by `api` (`app/infra/modelserver_client.py`). No Anthropic key
+Internal service called only by `api` (`app/infra/modelserver_client.py`). No LLM provider key
 (D2). Loads the classifier + NER artifact from MinIO and verifies SHA-256 vs. model card at
 boot; refuses to serve otherwise (Principle II / D12). Safe-envelope errors.
 

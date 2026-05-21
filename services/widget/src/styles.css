@@ -1,115 +1,416 @@
 :root {
   color: #0f172a;
   background: transparent;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+
+  /* =========================================================
+     Static design tokens (not themed per widget config)
+     ========================================================= */
+
+  /* Semantic colors */
+  --c-primary: #2563eb;
+  --c-primary-soft: rgba(37, 99, 235, 0.10);
+  --c-accent: #d97706;
+  --c-accent-soft: rgba(217, 119, 6, 0.12);
+  --c-success: #15803d;
+  --c-success-soft: rgba(22, 163, 74, 0.10);
+  --c-warning: #b45309;
+  --c-warning-soft: rgba(245, 158, 11, 0.14);
+  --c-danger: #b91c1c;
+  --c-danger-soft: rgba(254, 226, 226, 0.72);
+
+  /* Surfaces */
+  --c-surface-0: #ffffff;
+  --c-surface-1: #f8fafc;
+  --c-surface-2: #f1f5f9;
+
+  /* Borders */
+  --c-border-subtle: rgba(15, 23, 42, 0.06);
+  --c-border: rgba(15, 23, 42, 0.10);
+  --c-border-strong: rgba(15, 23, 42, 0.16);
+
+  /* Text */
+  --c-text: #0f172a;
+  --c-text-muted: #475569;
+  --c-text-subtle: #94a3b8;
+  --c-text-on-primary: #ffffff;
+
+  /* Elevation */
+  --c-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --c-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+
+  /* =========================================================
+     Per-widget overrides (set inline on .copilot-shell from
+     config.theme: color / background / accent / fontFamily)
+     ========================================================= */
+  --copilot-color: var(--c-text);
+  --copilot-background: var(--c-surface-0);
+  --copilot-accent: var(--c-primary);
+  --copilot-muted: var(--c-text-muted);
+  --copilot-subtle: var(--c-text-subtle);
+  --copilot-border: var(--c-border);
+  --copilot-border-strong: var(--c-border-strong);
+  --copilot-thread-bg: var(--c-surface-1);
+  --copilot-bubble-bg: var(--c-surface-0);
+  --copilot-chip-bg: var(--c-surface-2);
+  --copilot-user-fg: var(--c-text-on-primary);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  min-width: 320px;
+  padding: 0;
+}
+
+body {
+  min-width: 280px;
   background: transparent;
+  color: var(--copilot-color);
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
+  color: inherit;
 }
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Shell */
 
 .copilot-shell {
   width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px;
+  gap: 12px;
+  padding: 16px;
   color: var(--copilot-color);
   background: var(--copilot-background);
 }
+
+/* Header */
 
 .copilot-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+}
+
+.copilot-header-text {
+  min-width: 0;
 }
 
 .copilot-kicker {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 700;
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--copilot-accent);
 }
 
-.copilot-header h1 {
+.copilot-title {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.25;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
 }
 
+/* Status pill */
+
 .copilot-status {
-  width: 10px;
-  height: 10px;
-  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: #f59e0b;
+  border: 1px solid var(--copilot-border);
+  background: var(--c-surface-0);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--copilot-muted);
+  white-space: nowrap;
   flex: 0 0 auto;
 }
 
-.copilot-status.ready {
-  background: #16a34a;
+.copilot-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-text-subtle);
+  flex: 0 0 auto;
 }
+
+.copilot-status-missing_id {
+  background: var(--c-danger-soft);
+  border-color: rgba(185, 28, 28, 0.24);
+  color: var(--c-danger);
+}
+.copilot-status-missing_id .copilot-status-dot {
+  background: var(--c-danger);
+}
+
+.copilot-status-waiting {
+  background: var(--c-accent-soft);
+  border-color: rgba(217, 119, 6, 0.28);
+  color: var(--c-warning);
+}
+.copilot-status-waiting .copilot-status-dot {
+  background: var(--c-accent);
+}
+
+.copilot-status-connecting {
+  background: var(--c-primary-soft);
+  border-color: rgba(37, 99, 235, 0.24);
+  color: var(--copilot-accent);
+}
+.copilot-status-connecting .copilot-status-dot {
+  background: var(--copilot-accent);
+  animation: copilot-pulse 1.2s ease-in-out infinite;
+}
+
+.copilot-status-ready {
+  background: var(--c-success-soft);
+  border-color: rgba(22, 163, 74, 0.24);
+  color: var(--c-success);
+}
+.copilot-status-ready .copilot-status-dot {
+  background: var(--c-success);
+}
+
+.copilot-status-error {
+  background: var(--c-danger-soft);
+  border-color: rgba(185, 28, 28, 0.30);
+  color: var(--c-danger);
+}
+.copilot-status-error .copilot-status-dot {
+  background: var(--c-danger);
+}
+
+@keyframes copilot-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copilot-status-connecting .copilot-status-dot {
+    animation: none;
+  }
+}
+
+/* Tool chips (display-only) */
 
 .copilot-tools {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 6px;
 }
 
-.copilot-tools button,
-.copilot-composer button {
-  min-height: 36px;
-  border: 0;
-  border-radius: 6px;
-  padding: 0 12px;
-  color: #ffffff;
-  background: var(--copilot-accent);
-  cursor: pointer;
+.copilot-tool-chip {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--copilot-chip-bg);
+  border: 1px solid var(--c-border-subtle);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--copilot-muted);
+  letter-spacing: 0.01em;
 }
+
+/* Thread */
 
 .copilot-thread {
-  min-height: 220px;
+  flex: 1 1 auto;
+  min-height: 200px;
+  max-height: 360px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 8px;
-  background: rgba(248, 250, 252, 0.72);
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--copilot-border);
+  border-radius: 10px;
+  background: var(--copilot-thread-bg);
 }
 
-.assistant-message,
-.user-message {
-  max-width: 86%;
+.copilot-thread::-webkit-scrollbar {
+  width: 8px;
+}
+
+.copilot-thread::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.copilot-thread::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15);
+  border-radius: 4px;
+}
+
+/* Messages */
+
+.copilot-message {
+  max-width: 88%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-size: 13.5px;
+}
+
+.copilot-message-content {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
-.assistant-message {
+.copilot-message-assistant {
+  align-self: flex-start;
+  background: var(--copilot-bubble-bg);
+  border: 1px solid var(--copilot-border);
   color: var(--copilot-color);
-  background: #ffffff;
 }
 
-.user-message {
+.copilot-message-user {
   align-self: flex-end;
-  color: #ffffff;
   background: var(--copilot-accent);
+  color: var(--copilot-user-fg);
+  border: 1px solid var(--copilot-accent);
+  box-shadow: var(--c-shadow-sm);
 }
+
+.copilot-message-error {
+  border-color: rgba(185, 28, 28, 0.35);
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+
+/* Tool call badges */
+
+.copilot-tool-calls {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.copilot-tool-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--copilot-chip-bg);
+  border: 1px solid var(--c-border-subtle);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--copilot-muted);
+}
+
+.copilot-tool-call.ok {
+  color: var(--c-success);
+  background: var(--c-success-soft);
+  border-color: rgba(22, 163, 74, 0.22);
+}
+
+.copilot-tool-call.fail {
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+  border-color: rgba(185, 28, 28, 0.22);
+}
+
+.copilot-tool-call-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+/* Typing indicator */
+
+.copilot-message-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px;
+}
+
+.copilot-typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-text-subtle);
+  animation: copilot-typing 1.2s ease-in-out infinite;
+}
+
+.copilot-typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.copilot-typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes copilot-typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copilot-typing-dot {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* Banner */
+
+.copilot-banner {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+.copilot-banner-error {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+  border-color: rgba(185, 28, 28, 0.28);
+}
+
+/* Composer */
 
 .copilot-composer {
   display: grid;
@@ -117,10 +418,77 @@ input {
   gap: 8px;
 }
 
-.copilot-composer input {
+.copilot-composer-input {
   min-width: 0;
-  height: 40px;
-  border: 1px solid rgba(15, 23, 42, 0.18);
-  border-radius: 6px;
+  height: 38px;
   padding: 0 12px;
+  border: 1px solid var(--copilot-border-strong);
+  border-radius: 8px;
+  background: var(--c-surface-0);
+  color: var(--copilot-color);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.copilot-composer-input::placeholder {
+  color: var(--copilot-subtle);
+}
+
+.copilot-composer-input:focus {
+  border-color: var(--copilot-accent);
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.copilot-composer-input:disabled {
+  background: var(--c-surface-2);
+  cursor: not-allowed;
+}
+
+.copilot-composer-send {
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--copilot-accent);
+  color: var(--copilot-user-fg);
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: var(--c-shadow-sm);
+  transition: filter 150ms ease, box-shadow 150ms ease;
+}
+
+.copilot-composer-send:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.copilot-composer-send:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.copilot-composer-send:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+/* Narrow widgets (e.g. < 360px iframe) */
+
+@media (max-width: 360px) {
+  .copilot-shell {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .copilot-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .copilot-status {
+    align-self: flex-start;
+  }
+
+  .copilot-message {
+    max-width: 95%;
+  }
 }

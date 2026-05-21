@@ -22,7 +22,7 @@ class FakeRetrieval:
         return self.chunks
 
 
-class FakeAnthropic:
+class FakeLLM:
     async def complete(self, *, system_prompt: str, user_prompt: str, max_tokens: int = 500) -> str:
         return "Use the documented retry policy for transient API failures."
 
@@ -45,7 +45,7 @@ async def _assert_grounded_answer() -> None:
     )
     service = RagService(
         retrieval=FakeRetrieval([RetrievedChunk(chunk=chunk, score=0.99)]),
-        anthropic=FakeAnthropic(),
+        llm=FakeLLM(),
         source_id_override=source_id,
     )
 
@@ -64,7 +64,7 @@ def test_rag_answer_declines_when_ungrounded() -> None:
 async def _assert_ungrounded_answer() -> None:
     service = RagService(
         retrieval=FakeRetrieval([]),
-        anthropic=FakeAnthropic(),
+        llm=FakeLLM(),
         source_id_override=uuid4(),
     )
 
